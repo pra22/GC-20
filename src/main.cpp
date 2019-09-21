@@ -716,14 +716,13 @@ void loop()
       if(addr < 2100)
       {
         currentLogTime = millis();
-        if ((currentLogTime - previousLogTime) >= 60000)   // log every 10 minutes
+        if ((currentLogTime - previousLogTime) >= 600000)   // log every 10 minutes
         {
           EEPROMWritelong(addr, averageCount);
           addr += 4;
           EEPROMWritelong(96, addr); // write current address number to an adress just before the logged data
           previousLogTime = currentLogTime;
           EEPROM.commit();
-          
         }
       }
     }

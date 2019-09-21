@@ -13,7 +13,7 @@
 - Post bulk logged data to cloud service (ThingSpeak) to graph, analyze and/or save to computer
 - Monitoring Station mode: device stays connected to WiFi and regularly posts ambient radiation level to ThingSpeak channel
 
-### Overview
+### Overview and User's Guide
 
 ![test](https://raw.githubusercontent.com/pra22/GC-20/master/Images/homepage.jpg)
 
@@ -54,3 +54,9 @@ To set up WiFi, tap on WiFi setup and the GC-20 will enter AP mode. Using any wi
 ![test](https://raw.githubusercontent.com/pra22/GC-20/master/Images/device_mode.jpg)
 
 In the Device Mode menu option, the user can choose between the portable Geiger counter mode, or configure the device as a radiation monitoring station. In the monitoring station mode, the GC-20 is always connected to WiFi, and updates the ThingSpeak field every 5 minutes. If it can't connect to WiFi during startup, it waits for 30 seconds before starting in portable Geiger counter mode.
+
+![test](https://raw.githubusercontent.com/pra22/GC-20/master/Images/thingspeak_live.png)
+![test](https://raw.githubusercontent.com/pra22/GC-20/master/Images/thingspeak_log.png)
+
+Examples of the ThingSpeak data plots from the radiation monitor and from a bulk-upload of logged data.
+

@@ -14,4 +14,4 @@
 
 ### Overview
 
-img src = <https://github.com/pra22/GC-20/Images/homepage.jpg>
+img src = <https://github.com/pra22/GC-20/blob/master/Images/homepage.jpg>

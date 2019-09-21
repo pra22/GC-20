@@ -29,14 +29,15 @@ The timed count mode allows for the measurement of very low doses of radiation s
 The settings menu has four options: Dose Units, Alert Threshold, Calibration, and Logging and WiFi. 
 
 ![test](https://raw.githubusercontent.com/pra22/GC-20/master/Images/units.jpg)
+![test](https://raw.githubusercontent.com/pra22/GC-20/master/Images/threshold.jpg)
+![test](https://raw.githubusercontent.com/pra22/GC-20/master/Images/calibration.jpg)
 
 The Dose Units option allows the user to choose between either Sieverts or Rems for the effective dose rate and the accumulated dose.
 
-![test](https://raw.githubusercontent.com/pra22/GC-20/master/Images/threshold.jpg)
 
 The user can adjust the threshold at which the home page displays a "High Radiation Level" alert in red, in increments of 1 uSv/hr.
 
-![test](https://raw.githubusercontent.com/pra22/GC-20/master/Images/calibration.jpg)
+
 
 The calibration factor that relates CPM to uSv/hr can be changed using this option. The geiger tube has different sensitivities to different isotopes, so to keep the dose readings reasonably accurate, a default conversion factor of 175 is used. This will accurately report the gamma dose from Cesium-137. 
 

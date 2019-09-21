@@ -14,4 +14,4 @@
 
 ### Overview
 
-![test](https://raw.githubusercontent.com/pra22/GC-20/master/Images/homepage.jpg)
+![](https://raw.githubusercontent.com/pra22/GC-20/master/Images/homepage.jpg | width=100)

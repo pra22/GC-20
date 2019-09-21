@@ -22,7 +22,8 @@ The homepage displays the current effective dose rate, counts per minute, and th
 ![test](https://raw.githubusercontent.com/pra22/GC-20/master/Images/timed_count_setup.jpg)
 ![test](https://raw.githubusercontent.com/pra22/GC-20/master/Images/timed_count_running.jpg)
 
-The timed count mode allows for the measurement of very low doses of radiation such as the radiation coming from bananas, brazil nuts, or granite. It can also be used to test for high levels of Radon. Select the time interval in five minute increments, hit begin, and the GC-20 starts counting and displaying the accumulated counts over time. It also displays the real time CPM during the timed count.
+The timed count mode allows for the measurement of very low doses of radiation such as the radiation coming from bananas, brazil nuts, or granite. It can also be used to test for high levels of Radon. Select the time interval in five minute increments, hit begin, and the GC-20 starts counting and displaying the accumulated counts over time. It also displays the real time CPM during the timed count. 
+The WiFi symbol next to the battery level indicator means that the GC-20 is currently in monitoring station mode and is connected to WiFi. More on that below.
 
 ![test](https://raw.githubusercontent.com/pra22/GC-20/master/Images/settings.jpg)
 
@@ -42,8 +43,9 @@ The user can adjust the threshold at which the home page displays a "High Radiat
 The calibration factor that relates CPM to uSv/hr can be changed using this option. The geiger tube has different sensitivities to different isotopes, so to keep the dose readings reasonably accurate, a default conversion factor of 175 is used. This will accurately report the gamma dose from Cesium-137. 
 
 ![test](https://raw.githubusercontent.com/pra22/GC-20/master/Images/logging_off.jpg)
+![test](https://raw.githubusercontent.com/pra22/GC-20/master/Images/logging_on.jpg)
 
-Finally, tapping the Logging and WiFi button offers a further sub-menu of options related to setting up wifi for the first time, logging data, uploading logged data, and setting the device mode.
+Finally, tapping the Logging and WiFi button offers a further sub-menu of options related to setting up wifi for the first time, logging data, uploading logged data, and setting the device mode. When data logging is on, an "L" symbol appears on the top bar.
 
 ![test](https://raw.githubusercontent.com/pra22/GC-20/master/Images/wifi_setup.jpg)
 

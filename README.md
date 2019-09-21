@@ -13,7 +13,7 @@
 - Post bulk logged data to cloud service (ThingSpeak) to graph, analyze and/or save to computer
 - Monitoring Station mode: device stays connected to WiFi and regularly posts ambient radiation level to ThingSpeak channel
 
-### Overview
+### Overview and User's Guide
 
 ![test](https://raw.githubusercontent.com/pra22/GC-20/master/Images/homepage.jpg)
 

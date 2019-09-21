@@ -716,7 +716,7 @@ void loop()
       if(addr < 2100)
       {
         currentLogTime = millis();
-        if ((currentLogTime - previousLogTime) >= 600000)   // log every 10 minutes
+        if ((currentLogTime - previousLogTime) >= 60000)   // log every 10 minutes
         {
           EEPROMWritelong(addr, averageCount);
           addr += 4;

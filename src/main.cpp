@@ -298,7 +298,7 @@ void drawAlertPage();             // page 3
 void drawCalibrationPage();       // page 4
 void drawWifiPage();              // page 5
 void drawTimedCountPage();        // page 6
-void drawTimedCountRunningPage(int duration, int size); // page 7
+void drawTimedCountRunningPage(int duration, int size); // page 7 
 void drawDeviceModePage();        // page 8
 
 void drawFrame();
@@ -642,7 +642,7 @@ void loop()
         }
         if (integrationMode == 0) // change button based on touch and previous state
         {
-          tft.fillRoundRect(162, 259, 75, 57, 3, 0x2A86);
+          tft.fillRoundRect(162, 259, 74, 57, 3, 0x2A86);
           tft.setFont(&FreeSans12pt7b);
           tft.setTextSize(1);
           tft.setCursor(180, 283);
@@ -652,7 +652,7 @@ void loop()
         }
         else if (integrationMode == 1)
         {
-          tft.fillRoundRect(162, 259, 75, 57, 3, 0x2A86);
+          tft.fillRoundRect(162, 259, 74, 57, 3, 0x2A86);
           tft.setFont(&FreeSans12pt7b);
           tft.setTextSize(1);
           tft.setCursor(180, 283);
@@ -662,7 +662,7 @@ void loop()
         }
         else if (integrationMode == 2)
         {
-          tft.fillRoundRect(162, 259, 75, 57, 3, 0x2A86);
+          tft.fillRoundRect(162, 259, 74, 57, 3, 0x2A86);
           tft.setFont(&FreeSans12pt7b);
           tft.setTextSize(1);
           tft.setCursor(180, 283);
@@ -727,7 +727,7 @@ void loop()
         }
       }
     }
-    if (deviceMode)
+    if (deviceMode)    // deviceMode is 1 when in monitoring station mode. Uploads CPM to thingspeak every 5 minutes
     {
       currentUploadTime = millis();
       if ((currentUploadTime - previousUploadTime) > 300000)
@@ -854,7 +854,7 @@ void loop()
       }
     }
   }
-  else if (page == 3)
+  else if (page == 3)        // alert thresold page
   {
     tft.setFont();
     tft.setTextSize(3);
@@ -897,7 +897,7 @@ void loop()
       }
     }
   }
-  else if (page == 4)
+  else if (page == 4)     // calibration page
   {
     tft.setFont();
     tft.setTextSize(3);
@@ -995,13 +995,13 @@ void loop()
         char channelIDSt[20];
         char writeAPISt[20];
 
-        WiFiManagerParameter channel_id("0", "Channel ID", channelIDSt, 20);
+        WiFiManagerParameter channel_id("0", "Channel ID", channelIDSt, 20); // create custom parameters for setup
         
         WiFiManagerParameter write_api("1", "Write API", writeAPISt, 20);
         wifiManager.addParameter(&channel_id);
         wifiManager.addParameter(&write_api);
 
-        wifiManager.startConfigPortal("GC20");
+        wifiManager.startConfigPortal("GC20");            // put the esp in AP mode for wifi setup, create a network with name "GC20"
 
         strcpy(channelIDSt, channel_id.getValue());
         strcpy(writeAPISt, write_api.getValue());
@@ -1011,7 +1011,7 @@ void loop()
         size_t apiLen = String(writeAPISt).length();
 
         char channelInit = EEPROM.read(4001);  // first character of channelID is stored in EEPROM address 4001
-        char apiKeyInit = EEPROM.read(4002);
+        char apiKeyInit = EEPROM.read(4002);   // Only overwrite channelIDSt and writeAPISt if new value of the first character is different from what was saved.
 
         if (channelInit != channelIDSt[0])   
         {
@@ -1031,7 +1031,7 @@ void loop()
           EEPROM.write(saveAPILen, apiLen);
         }
 
-        String ssidString = WiFi.SSID();
+        String ssidString = WiFi.SSID();      // retrieve ssid and password form the WifiManager library
         String passwordString = WiFi.psk();
 
         size_t ssidLen = ssidString.length();
@@ -1043,22 +1043,22 @@ void loop()
         char ssidChar[20];
         char passwordChar[20];
 
-        ssidString.toCharArray(ssidChar, ssidLen + 1);
+        ssidString.toCharArray(ssidChar, ssidLen + 1); 
         passwordString.toCharArray(passwordChar, passLen + 1);
 
         for (unsigned int a = 10; a < 10 + ssidLen; a++)
         {
-          EEPROM.write((a), ssidChar[a - 10]);
+          EEPROM.write((a), ssidChar[a - 10]);             // save ssid and ssid length to EEPROM
         }
         EEPROM.write(saveSSIDLen, ssidLen);
         
         for (unsigned int b = 30; b < 30 + passLen; b++)
-        {
-          EEPROM.write((b), passwordChar[b - 30]);
+        {    
+          EEPROM.write((b), passwordChar[b - 30]);          // save password and password length to EEPROM
         }
         EEPROM.write(savePWLen, passLen);
 
-        EEPROM.write(4001, channelIDSt[0]);
+        EEPROM.write(4001, channelIDSt[0]);                 // save first characters of channel ID and api key to EEPROM
         EEPROM.write(4002, writeAPISt[0]);
 
         EEPROM.commit();
@@ -1066,7 +1066,7 @@ void loop()
         tft.setCursor(16, 265);
         tft.println("Settings saved. Restarting");
 
-        delay(2000);
+        delay(1000);
         
         ESP.reset();
       }
@@ -1081,33 +1081,33 @@ void loop()
         Serial.println(password);
 
         WiFi.begin(ssid, password);
-        while (WiFi.status() != WL_CONNECTED) { // Wait for the Wi-Fi to connect
+
+        while (WiFi.status() != WL_CONNECTED) {    // Wait for the Wi-Fi to connect
           delay(100);
         }
+
         tft.setCursor(36, 160);
         tft.println("Creating JSON file..");
-        createJsonFile();
+        createJsonFile();                         // reads logged data from EEPROM and creates a json file
         Serial.println(jsonBuffer);
         delay(1000);
         tft.setCursor(70, 220);
         tft.println("Uploading..");
         delay(1000);
 
-        // char data[2000] = "{\"write_api_key\":\"";
-        char secondHalf[50] = "\",\"updates\":";
+        char secondHalf[50] = "\",\"updates\":";      
         strcat(data, channelAPIkey);
-        strcat(data, secondHalf);
+        strcat(data, secondHalf);               
 
-        strcat(data,jsonBuffer);
+        strcat(data,jsonBuffer);                // concatenate strings together and store in array named data
         strcat(data,"}");
 
         Serial.println(data);
-        // Close any connection before sending a new request
+
         client.stop();
-        String data_length = String(strlen(data)+1); //Compute the data buffer length
+        String data_length = String(strlen(data)+1);   
         
-        // POST data to ThingSpeak
-        if (client.connect(server, 80)) {
+        if (client.connect(server, 80)) {          // post data to thingspeak
           char temp1[100] = "POST /channels/";
           char temp2[30] = "/bulk_update.json HTTP/1.1";
           
@@ -1129,11 +1129,11 @@ void loop()
           WiFi.forceSleepBegin();
           delay(1);
 
-          clearLogs();
+          clearLogs();                 // erase logs and re-initialize the json buffer
           tft.setCursor(43, 260);
           tft.println("Resetting Device..");
           delay(1000);
-          ESP.reset();
+          ESP.reset();                 
         }
         else 
         {
@@ -1318,7 +1318,7 @@ void loop()
       }
     }
   }
-  else if (page == 8)
+  else if (page == 8)          // device mode selection page
   {
     if (!ts.touched())
       wasTouched = 0;
@@ -1456,7 +1456,7 @@ void drawHomePage()
 
   if (integrationMode == 0)
   {
-    tft.fillRoundRect(162, 259, 75, 57, 3, 0x2A86);
+    tft.fillRoundRect(162, 259, 74, 57, 3, 0x2A86);
     tft.setCursor(180, 283);
     tft.println("INT");
     tft.setCursor(177, 309);
@@ -1472,7 +1472,7 @@ void drawHomePage()
   }
   else if (integrationMode == 2)
   {
-    tft.fillRoundRect(162, 259, 75, 57, 3, 0x2A86);
+    tft.fillRoundRect(162, 259, 74, 57, 3, 0x2A86);
     tft.setCursor(180, 283);
     tft.println("INT");
     tft.setCursor(169, 309);

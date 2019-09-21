@@ -34,7 +34,10 @@ The user can adjust the threshold at which the home page displays a "High Radiat
 ![test](https://raw.githubusercontent.com/pra22/GC-20/master/Images/calibration.jpg)
 
 The calibration factor that relates CPM to uSv/hr can be changed using this option. The geiger tube has different sensitivities to different isotopes, so to keep the dose readings reasonably accurate, a default conversion factor of 175 is used. This will accurately report the gamma dose from Cesium-137. 
+
 ![test](https://raw.githubusercontent.com/pra22/GC-20/master/Images/logging_off.jpg)
+
 Finally, tapping the Logging and WiFi button offers a further sub-menu of options related to setting up wifi for the first time, logging data, uploading logged data, and setting the device mode.
+
 ![test](https://raw.githubusercontent.com/pra22/GC-20/master/Images/wifi_setup.jpg)
 

@@ -10,4 +10,4 @@
 - Audible clicker and LED indicator toggled on and off from homescreen
 - Offline data logging
 - Post bulk logged data to cloud service (ThingSpeak) to graph, analyze and/or save to computer
-- Monitoring Station mode: device stays connected to WiFi and regularly posts radiation level to ThingSpeak channel
+- Monitoring Station mode: device stays connected to WiFi and regularly posts ambient radiation level to ThingSpeak channel

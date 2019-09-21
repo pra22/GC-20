@@ -15,7 +15,7 @@
 
 ### Overview
 
-# Homepage:
+## Homepage:
 ![test](https://raw.githubusercontent.com/pra22/GC-20/master/Images/homepage.jpg)
 
 The homepage displays the current effective dose rate, counts per minute, and the cumulative dose since the device was turned on. The integration time can be changed by tapping the "INT 60 s" button and the user can choose between 60, 180 and 5 seconds of integration. A shorter time allows faster response to changing radiation levels at the expense of accuracy. Using 180 seconds gives the least amount random fluctuation.

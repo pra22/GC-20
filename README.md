@@ -1,5 +1,5 @@
 # GC-20
-##### Portable Geiger counter, dosimeter and monitoring station with features like:
+### Portable Geiger counter, dosimeter and monitoring station with features like:
 - Touchscreen controlled, intuitive GUI
 - Displays counts per minute, current dose, and accumulated dose on homescreen
 - Variable integration time for averaging dose rate
@@ -11,3 +11,7 @@
 - Offline data logging
 - Post bulk logged data to cloud service (ThingSpeak) to graph, analyze and/or save to computer
 - Monitoring Station mode: device stays connected to WiFi and regularly posts ambient radiation level to ThingSpeak channel
+
+### Overview
+
+img src = <https://github.com/pra22/GC-20/Images/homepage.jpg>

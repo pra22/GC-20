@@ -424,7 +424,7 @@ void loop()
 
         batteryInput = analogRead(A0);
         batteryInput = constrain(batteryInput, 590, 800);
-        batteryPercent = map(batteryInput, 590, 850, 0, 100);
+        batteryPercent = map(batteryInput, 590, 800, 0, 100);
         batteryMapped = map(batteryPercent, 100, 0, 212, 233);
 
         tft.fillRect(212, 6, 22, 10, ILI9341_BLACK);

@@ -97,7 +97,7 @@ int x, y; // touch points
 int batteryInput;
 int batteryPercent;
 int batteryMapped = 212;       // pixel location of battery icon
-int batteryUpdateCounter = 59;
+int batteryUpdateCounter = 29;
 
 // EEPROM variables
 const int saveUnits = 0;
@@ -420,16 +420,23 @@ void loop()
 
       batteryUpdateCounter ++;     
 
-      if (batteryUpdateCounter == 60){         // update battery level every minute. Prevents random fluctations of battery level.
+      if (batteryUpdateCounter == 30){         // update battery level every 30 seconds. Prevents random fluctations of battery level.
 
         batteryInput = analogRead(A0);
-        batteryInput = constrain(batteryInput, 590, 850);
+        batteryInput = constrain(batteryInput, 590, 800);
         batteryPercent = map(batteryInput, 590, 850, 0, 100);
         batteryMapped = map(batteryPercent, 100, 0, 212, 233);
 
         tft.fillRect(212, 6, 22, 10, ILI9341_BLACK);
-        tft.fillRect(batteryMapped, 6, (234 - batteryMapped), 10, ILI9341_GREEN); // draws battery icon
-
+        if (batteryPercent < 10)
+        {
+          tft.fillRect(batteryMapped, 6, (234 - batteryMapped), 10, ILI9341_RED);
+        }
+        else
+        {
+          tft.fillRect(batteryMapped, 6, (234 - batteryMapped), 10, ILI9341_GREEN); // draws battery icon
+        }
+        
         batteryUpdateCounter = 0;
         Serial.println(batteryInput);
         Serial.println(batteryPercent);

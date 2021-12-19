@@ -1,6 +1,6 @@
 /*  SBM-20 based Geiger Counter
     Author: Prabhat    Email: pra22@pitt.edu
-    Sketch for ESP8266 that counts clicks from the Geiger tube, calculates the counts per minute, and displays information 
+    Sketch for ESP8266 that counts clicks from the Geiger tube, calculates the counts per minute, and displays information
     on a TFT touchscreen.
     Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
 */
@@ -17,7 +17,7 @@
 #include <Fonts/FreeSans12pt7b.h>
 #include "Adafruit_ILI9341.h"
 #include <XPT2046_Touchscreen.h>
-
+#include <Wire.h>
 #define CS_PIN D2
 XPT2046_Touchscreen ts(CS_PIN);
 
@@ -48,7 +48,7 @@ int channelIDLength;
 int writeAPILength;
 char ssid[20];
 char password[20];
-char channelID[20]; // = "864288";
+char channelID[20];     // = "864288";
 char channelAPIkey[20]; // = "37SAHQPEQ7FOBC20";
 char server[] = "api.thingspeak.com";
 int attempts; // number of connection attempts when device starts up in monitoring mode
@@ -61,7 +61,7 @@ const int interruptPin = 5;
 long count[61];
 long fastCount[6]; // arrays to store running counts
 long slowCount[181];
-int i = 0;         // array elements
+int i = 0; // array elements
 int j = 0;
 int k = 0;
 
@@ -79,7 +79,7 @@ unsigned long cumulativeCount;
 float doseRate;
 float totalDose;
 char dose[5];
-int doseLevel;               // determines home screen warning signs
+int doseLevel; // determines home screen warning signs
 int previousDoseLevel;
 
 bool ledSwitch = 1;
@@ -96,7 +96,7 @@ int x, y; // touch points
 // Battery indicator variables
 int batteryInput;
 int batteryPercent;
-int batteryMapped = 212;       // pixel location of battery icon
+int batteryMapped = 212; // pixel location of battery icon
 int batteryUpdateCounter = 29;
 
 // EEPROM variables
@@ -111,12 +111,11 @@ const int saveIDLen = 7;
 const int saveAPILen = 8;
 
 // Data Logging variables
-int addr = 200;                 // starting address for data logging
-char jsonBuffer[14000] = "["; 
+int addr = 200; // starting address for data logging
+char jsonBuffer[14000] = "[";
 char data[14500] = "{\"write_api_key\":\"";
 unsigned long currentLogTime;
 unsigned long previousLogTime;
-
 
 // Timed Count Variables:
 int interval = 5;
@@ -136,26 +135,23 @@ bool deviceMode;
 // interrupt routine declaration
 void ICACHE_RAM_ATTR isr();
 
-unsigned int previousIntMicros;              // timers to limit count increment rate in the ISR
+unsigned int previousIntMicros; // timers to limit count increment rate in the ISR
 
-const unsigned char gammaBitmap [] PROGMEM = {
-	0x30, 0x00, 0x78, 0x70, 0xe8, 0xe0, 0xc4, 0xe0, 0x84, 0xc0, 0x05, 0xc0, 0x05, 0x80, 0x07, 0x80, 
-	0x03, 0x00, 0x07, 0x00, 0x0e, 0x00, 0x0e, 0x00, 0x1e, 0x00, 0x1e, 0x00, 0x1e, 0x00, 0x3e, 0x00, 
-	0x1c, 0x00, 0x00, 0x00
-};
+const unsigned char gammaBitmap[] PROGMEM = {
+    0x30, 0x00, 0x78, 0x70, 0xe8, 0xe0, 0xc4, 0xe0, 0x84, 0xc0, 0x05, 0xc0, 0x05, 0x80, 0x07, 0x80,
+    0x03, 0x00, 0x07, 0x00, 0x0e, 0x00, 0x0e, 0x00, 0x1e, 0x00, 0x1e, 0x00, 0x1e, 0x00, 0x3e, 0x00,
+    0x1c, 0x00, 0x00, 0x00};
 
-const unsigned char betaBitmap [] PROGMEM = {
-	0x00, 0xc0, 0x00, 0x03, 0xf0, 0x00, 0x07, 0x18, 0x00, 0x06, 0x18, 0x00, 0x0e, 0x18, 0x00, 0x0e, 
-	0x18, 0x00, 0x0e, 0xf8, 0x00, 0x0e, 0x1c, 0x00, 0x0e, 0x0c, 0x00, 0x0e, 0x0c, 0x00, 0x0e, 0x0c, 
-	0x00, 0x0e, 0x0c, 0x00, 0x0f, 0x1c, 0x00, 0x0f, 0xf8, 0x00, 0x0e, 0x00, 0x00, 0x0e, 0x00, 0x00, 
-	0x0c, 0x00, 0x00, 0x00, 0x00, 0x00
-};
-const unsigned char wifiBitmap [] PROGMEM = {
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0xf0, 0x00, 0x0f, 0xfe, 0x00, 0x3f, 0xff, 0x80, 0x78, 
-	0x03, 0xc0, 0xe0, 0x00, 0xe0, 0x47, 0xfc, 0x40, 0x0f, 0xfe, 0x00, 0x1c, 0x07, 0x00, 0x08, 0x02, 
-	0x00, 0x01, 0xf0, 0x00, 0x03, 0xf8, 0x00, 0x01, 0x10, 0x00, 0x00, 0x40, 0x00, 0x00, 0xe0, 0x00, 
-	0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-};
+const unsigned char betaBitmap[] PROGMEM = {
+    0x00, 0xc0, 0x00, 0x03, 0xf0, 0x00, 0x07, 0x18, 0x00, 0x06, 0x18, 0x00, 0x0e, 0x18, 0x00, 0x0e,
+    0x18, 0x00, 0x0e, 0xf8, 0x00, 0x0e, 0x1c, 0x00, 0x0e, 0x0c, 0x00, 0x0e, 0x0c, 0x00, 0x0e, 0x0c,
+    0x00, 0x0e, 0x0c, 0x00, 0x0f, 0x1c, 0x00, 0x0f, 0xf8, 0x00, 0x0e, 0x00, 0x00, 0x0e, 0x00, 0x00,
+    0x0c, 0x00, 0x00, 0x00, 0x00, 0x00};
+const unsigned char wifiBitmap[] PROGMEM = {
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0xf0, 0x00, 0x0f, 0xfe, 0x00, 0x3f, 0xff, 0x80, 0x78,
+    0x03, 0xc0, 0xe0, 0x00, 0xe0, 0x47, 0xfc, 0x40, 0x0f, 0xfe, 0x00, 0x1c, 0x07, 0x00, 0x08, 0x02,
+    0x00, 0x01, 0xf0, 0x00, 0x03, 0xf8, 0x00, 0x01, 0x10, 0x00, 0x00, 0x40, 0x00, 0x00, 0xe0, 0x00,
+    0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
 const unsigned char settingsBitmap[] PROGMEM = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -265,41 +261,40 @@ const unsigned char ledOffBitmap[] PROGMEM = {
     0x00, 0x00, 0x3f, 0xe0, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xe0, 0x00, 0x00, 0x00, 0x00, 0x3f, 0xe0,
     0x00, 0x00, 0x00, 0x00, 0x1f, 0xc0, 0x00, 0x00, 0x00, 0x00, 0x07, 0x00, 0x00, 0x00};
 
-const unsigned char backBitmap [] PROGMEM = {
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0f, 0xc0, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x00, 0x1f, 0xe0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7f, 0xe0, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x00, 0xff, 0xe0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0xff, 0xc0, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x03, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0f, 0xfe, 0x00, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x1f, 0xf8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7f, 0xf0, 0x00, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0xff, 0xe0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0xff, 0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, 
-    0x07, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x80, 0x0f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xc0, 
-    0x0f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xc0, 0x0f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xc0, 
-    0x07, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x80, 0x01, 0xff, 0xc0, 0x00, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0xff, 0xe0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7f, 0xf0, 0x00, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x1f, 0xf8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0f, 0xfe, 0x00, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x07, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0xff, 0x80, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x00, 0xff, 0xe0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7f, 0xe0, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x00, 0x1f, 0xe0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0f, 0xc0, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-};
+const unsigned char backBitmap[] PROGMEM = {
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0f, 0xc0, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x1f, 0xe0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7f, 0xe0, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0xff, 0xe0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0xff, 0xc0, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x03, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0f, 0xfe, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x1f, 0xf8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7f, 0xf0, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0xff, 0xe0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0xff, 0xc0, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x07, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x80, 0x0f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xc0,
+    0x0f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xc0, 0x0f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xc0,
+    0x07, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x80, 0x01, 0xff, 0xc0, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0xff, 0xe0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7f, 0xf0, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x1f, 0xf8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0f, 0xfe, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x07, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0xff, 0x80, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0xff, 0xe0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7f, 0xe0, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x1f, 0xe0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0f, 0xc0, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
-void drawHomePage();              // page 0
-void drawSettingsPage();          // page 1
-void drawUnitsPage();             // page 2
-void drawAlertPage();             // page 3
-void drawCalibrationPage();       // page 4
-void drawWifiPage();              // page 5
-void drawTimedCountPage();        // page 6
-void drawTimedCountRunningPage(int duration, int size); // page 7 
-void drawDeviceModePage();        // page 8
+void drawHomePage();                                    // page 0
+void drawSettingsPage();                                // page 1
+void drawUnitsPage();                                   // page 2
+void drawAlertPage();                                   // page 3
+void drawCalibrationPage();                             // page 4
+void drawWifiPage();                                    // page 5
+void drawTimedCountPage();                              // page 6
+void drawTimedCountRunningPage(int duration, int size); // page 7
+void drawDeviceModePage();                              // page 8
 
 void drawFrame();
 void drawBackButton();
@@ -327,7 +322,7 @@ void setup()
   digitalWrite(D3, LOW);
   digitalWrite(D0, LOW);
 
-  EEPROM.begin(4096);   // initialize emulated EEPROM sector with 4 kb
+  EEPROM.begin(4096); // initialize emulated EEPROM sector with 4 kb
 
   doseUnits = EEPROM.read(saveUnits);
   alarmThreshold = EEPROM.read(saveAlertThreshold);
@@ -371,7 +366,7 @@ void setup()
 
   if (!deviceMode)
   {
-    WiFi.mode( WIFI_OFF );                // turn off wifi
+    WiFi.mode(WIFI_OFF); // turn off wifi
     WiFi.forceSleepBegin();
     delay(1);
   }
@@ -383,18 +378,18 @@ void setup()
     tft.setTextSize(1);
     tft.setFont(&FreeSans9pt7b);
     tft.setTextColor(ILI9341_WHITE);
-    
+
     tft.setCursor(38, 140);
     tft.println("Connecting to WiFi..");
 
     while ((WiFi.status() != WL_CONNECTED) && (attempts < 300))
     {
       delay(100);
-      attempts ++;
+      attempts++;
     }
     if (attempts >= 300)
     {
-      deviceMode = 0; 
+      deviceMode = 0;
       tft.setCursor(45, 200);
       tft.println("Failed to connect.");
       delay(1000);
@@ -418,9 +413,10 @@ void loop()
     {
       previousMillis = currentMillis;
 
-      batteryUpdateCounter ++;     
+      batteryUpdateCounter++;
 
-      if (batteryUpdateCounter == 30){         // update battery level every 30 seconds. Prevents random fluctations of battery level.
+      if (batteryUpdateCounter == 30)
+      { // update battery level every 30 seconds. Prevents random fluctations of battery level.
 
         batteryInput = analogRead(A0);
         batteryInput = constrain(batteryInput, 590, 800);
@@ -436,7 +432,7 @@ void loop()
         {
           tft.fillRect(batteryMapped, 6, (234 - batteryMapped), 10, ILI9341_GREEN); // draws battery icon
         }
-        
+
         batteryUpdateCounter = 0;
         Serial.println(batteryInput);
         Serial.println(batteryPercent);
@@ -485,17 +481,15 @@ void loop()
       {
         doseRate = averageCount / float(conversionFactor);
         totalDose = cumulativeCount / (60 * float(conversionFactor));
-        
       }
       else if (doseUnits == 1)
       {
         doseRate = averageCount / float(conversionFactor * 10.0);
         totalDose = cumulativeCount / (60 * float(conversionFactor * 10.0)); // 1 mRem == 10 uSv
-        
       }
 
-      if (averageCount < conversionFactor/2) // 0.5 uSv/hr
-        doseLevel = 0; // determines alert level displayed on homescreen
+      if (averageCount < conversionFactor / 2) // 0.5 uSv/hr
+        doseLevel = 0;                         // determines alert level displayed on homescreen
       else if (averageCount < alarmThreshold * conversionFactor)
         doseLevel = 1;
       else
@@ -513,10 +507,11 @@ void loop()
       {
         dtostrf(doseRate, 4, 0, dose); // whole numbers only when dose is higher than 100
       }
-      else {
-        dtostrf(doseRate, 4, 0, dose);  // covers the rare edge case where the dose rate is sometimes errorenously calculated to be negative
+      else
+      {
+        dtostrf(doseRate, 4, 0, dose); // covers the rare edge case where the dose rate is sometimes errorenously calculated to be negative
       }
-      
+
       tft.setFont();
       tft.setCursor(44, 52);
       tft.setTextSize(5);
@@ -598,7 +593,7 @@ void loop()
         }
       }
       Serial.println(currentCount);
-    } 
+    }
     // end of millis()-controlled block that runs once every second. The rest of the code on page 0 runs every loop
     if (currentCount > previousCount)
     {
@@ -628,7 +623,7 @@ void loop()
 
       if ((x > 162 && x < 238) && (y > 259 && y < 318))
       {
-        integrationMode ++;
+        integrationMode++;
         if (integrationMode == 3)
         {
           integrationMode = 0;
@@ -678,7 +673,7 @@ void loop()
           tft.println("180 s");
         }
       }
-      else if ((x > 64 && x < 159) && (y > 259 && y < 318)) // timed count 
+      else if ((x > 64 && x < 159) && (y > 259 && y < 318)) // timed count
       {
         page = 6;
         drawTimedCountPage();
@@ -717,13 +712,13 @@ void loop()
         drawSettingsPage();
       }
     }
-    
+
     if (isLogging)
     {
-      if(addr < 2100)
+      if (addr < 2100)
       {
         currentLogTime = millis();
-        if ((currentLogTime - previousLogTime) >= 600000)   // log every 10 minutes
+        if ((currentLogTime - previousLogTime) >= 600000) // log every 10 minutes
         {
           EEPROMWritelong(addr, averageCount);
           addr += 4;
@@ -733,7 +728,7 @@ void loop()
         }
       }
     }
-    if (deviceMode)    // deviceMode is 1 when in monitoring station mode. Uploads CPM to thingspeak every 5 minutes
+    if (deviceMode) // deviceMode is 1 when in monitoring station mode. Uploads CPM to thingspeak every 5 minutes
     {
       currentUploadTime = millis();
       if ((currentUploadTime - previousUploadTime) > 300000)
@@ -860,7 +855,7 @@ void loop()
       }
     }
   }
-  else if (page == 3)        // alert thresold page
+  else if (page == 3) // alert thresold page
   {
     tft.setFont();
     tft.setTextSize(3);
@@ -903,7 +898,7 @@ void loop()
       }
     }
   }
-  else if (page == 4)     // calibration page
+  else if (page == 4) // calibration page
   {
     tft.setFont();
     tft.setTextSize(3);
@@ -944,7 +939,7 @@ void loop()
       }
     }
   }
-  else if (page == 5)  // Wifi page
+  else if (page == 5) // Wifi page
   {
     if (!ts.touched())
       wasTouched = 0;
@@ -960,12 +955,12 @@ void loop()
         page = 1;
         if (EEPROM.read(saveLoggingMode) != isLogging) // check current EEPROM value and only write if new value is different
         {
-          EEPROM.write(saveLoggingMode, isLogging); 
+          EEPROM.write(saveLoggingMode, isLogging);
           EEPROM.commit();
         }
         drawSettingsPage();
       }
-      else if ((x > 3 && x < 237) && (y > 64 && y < 108))  // wifi setup button
+      else if ((x > 3 && x < 237) && (y > 64 && y < 108)) // wifi setup button
       {
         tft.setFont(&FreeSans9pt7b);
         tft.setTextSize(1);
@@ -1002,12 +997,12 @@ void loop()
         char writeAPISt[20];
 
         WiFiManagerParameter channel_id("0", "Channel ID", channelIDSt, 20); // create custom parameters for setup
-        
+
         WiFiManagerParameter write_api("1", "Write API", writeAPISt, 20);
         wifiManager.addParameter(&channel_id);
         wifiManager.addParameter(&write_api);
 
-        wifiManager.startConfigPortal("GC20");            // put the esp in AP mode for wifi setup, create a network with name "GC20"
+        wifiManager.startConfigPortal("GC20"); // put the esp in AP mode for wifi setup, create a network with name "GC20"
 
         strcpy(channelIDSt, channel_id.getValue());
         strcpy(writeAPISt, write_api.getValue());
@@ -1016,10 +1011,10 @@ void loop()
 
         size_t apiLen = String(writeAPISt).length();
 
-        char channelInit = EEPROM.read(4001);  // first character of channelID is stored in EEPROM address 4001
-        char apiKeyInit = EEPROM.read(4002);   // Only overwrite channelIDSt and writeAPISt if new value of the first character is different from what was saved.
+        char channelInit = EEPROM.read(4001); // first character of channelID is stored in EEPROM address 4001
+        char apiKeyInit = EEPROM.read(4002);  // Only overwrite channelIDSt and writeAPISt if new value of the first character is different from what was saved.
 
-        if (channelInit != channelIDSt[0])   
+        if (channelInit != channelIDSt[0])
         {
           for (unsigned int a = 50; a < 50 + idLen; a++)
           {
@@ -1028,7 +1023,7 @@ void loop()
           EEPROM.write(saveIDLen, idLen);
         }
 
-        if(apiKeyInit != writeAPISt[0])
+        if (apiKeyInit != writeAPISt[0])
         {
           for (unsigned int b = 70; b < 70 + apiLen; b++)
           {
@@ -1037,7 +1032,7 @@ void loop()
           EEPROM.write(saveAPILen, apiLen);
         }
 
-        String ssidString = WiFi.SSID();      // retrieve ssid and password form the WifiManager library
+        String ssidString = WiFi.SSID(); // retrieve ssid and password form the WifiManager library
         String passwordString = WiFi.psk();
 
         size_t ssidLen = ssidString.length();
@@ -1049,22 +1044,22 @@ void loop()
         char ssidChar[20];
         char passwordChar[20];
 
-        ssidString.toCharArray(ssidChar, ssidLen + 1); 
+        ssidString.toCharArray(ssidChar, ssidLen + 1);
         passwordString.toCharArray(passwordChar, passLen + 1);
 
         for (unsigned int a = 10; a < 10 + ssidLen; a++)
         {
-          EEPROM.write((a), ssidChar[a - 10]);             // save ssid and ssid length to EEPROM
+          EEPROM.write((a), ssidChar[a - 10]); // save ssid and ssid length to EEPROM
         }
         EEPROM.write(saveSSIDLen, ssidLen);
-        
+
         for (unsigned int b = 30; b < 30 + passLen; b++)
-        {    
-          EEPROM.write((b), passwordChar[b - 30]);          // save password and password length to EEPROM
+        {
+          EEPROM.write((b), passwordChar[b - 30]); // save password and password length to EEPROM
         }
         EEPROM.write(savePWLen, passLen);
 
-        EEPROM.write(4001, channelIDSt[0]);                 // save first characters of channel ID and api key to EEPROM
+        EEPROM.write(4001, channelIDSt[0]); // save first characters of channel ID and api key to EEPROM
         EEPROM.write(4002, writeAPISt[0]);
 
         EEPROM.commit();
@@ -1073,12 +1068,12 @@ void loop()
         tft.println("Settings saved. Restarting");
 
         delay(1000);
-        
+
         ESP.reset();
       }
       else if ((x > 3 && x < 237) && (y > 162 && y < 206)) // upload data
       {
-        
+
         drawBlankDialogueBox();
         tft.setCursor(38, 100);
         tft.println("Connecting to Wifi..");
@@ -1088,69 +1083,70 @@ void loop()
 
         WiFi.begin(ssid, password);
 
-        while (WiFi.status() != WL_CONNECTED) {    // Wait for the Wi-Fi to connect
+        while (WiFi.status() != WL_CONNECTED)
+        { // Wait for the Wi-Fi to connect
           delay(100);
         }
 
         tft.setCursor(36, 160);
         tft.println("Creating JSON file..");
-        createJsonFile();                         // reads logged data from EEPROM and creates a json file
+        createJsonFile(); // reads logged data from EEPROM and creates a json file
         Serial.println(jsonBuffer);
         delay(1000);
         tft.setCursor(70, 220);
         tft.println("Uploading..");
         delay(1000);
 
-        char secondHalf[50] = "\",\"updates\":";      
+        char secondHalf[50] = "\",\"updates\":";
         strcat(data, channelAPIkey);
-        strcat(data, secondHalf);               
+        strcat(data, secondHalf);
 
-        strcat(data,jsonBuffer);                // concatenate strings together and store in array named data
-        strcat(data,"}");
+        strcat(data, jsonBuffer); // concatenate strings together and store in array named data
+        strcat(data, "}");
 
         Serial.println(data);
 
         client.stop();
-        String data_length = String(strlen(data)+1);   
-        
-        if (client.connect(server, 80)) {          // post data to thingspeak
+        String data_length = String(strlen(data) + 1);
+
+        if (client.connect(server, 80))
+        { // post data to thingspeak
           char temp1[100] = "POST /channels/";
           char temp2[30] = "/bulk_update.json HTTP/1.1";
-          
+
           strcat(temp1, channelID);
           strcat(temp1, temp2);
 
-          client.println(temp1); 
+          client.println(temp1);
           client.println("Host: api.thingspeak.com");
           client.println("User-Agent: mw.doc.bulk-update (Arduino ESP8266)");
           client.println("Connection: close");
           client.println("Content-Type: application/json");
-          client.println("Content-Length: "+data_length);
+          client.println("Content-Length: " + data_length);
           client.println();
           client.println(data);
           client.stop();
-          
+
           WiFi.disconnect();
-          WiFi.mode( WIFI_OFF );                // turn off wifi
+          WiFi.mode(WIFI_OFF); // turn off wifi
           WiFi.forceSleepBegin();
           delay(1);
 
-          clearLogs();                 // erase logs and re-initialize the json buffer
+          clearLogs(); // erase logs and re-initialize the json buffer
           tft.setCursor(43, 260);
           tft.println("Resetting Device..");
           delay(1000);
-          ESP.reset();                 
+          ESP.reset();
         }
-        else 
+        else
         {
           tft.setCursor(50, 260);
           tft.println("Failed to upload");
           delay(1000);
           ESP.reset();
         }
-        
       }
-      else if ((x > 3 && x < 237) && (y > 114 && y < 158)) // logging 
+      else if ((x > 3 && x < 237) && (y > 114 && y < 158)) // logging
       {
         isLogging = !isLogging;
         if (isLogging)
@@ -1168,7 +1164,7 @@ void loop()
           tft.println("LOGGING OFF");
         }
       }
-      else if ((x > 3 && x < 237) && (y > 214 && y < 258))  // device mode
+      else if ((x > 3 && x < 237) && (y > 214 && y < 258)) // device mode
       {
         page = 8;
         drawDeviceModePage();
@@ -1185,11 +1181,11 @@ void loop()
     {
       intervalSize = 2;
     }
-    else 
+    else
     {
       intervalSize = 3;
     }
-    
+
     tft.setFont();
     tft.setTextSize(3);
     tft.setTextColor(ILI9341_WHITE, ILI9341_BLACK);
@@ -1252,9 +1248,9 @@ void loop()
   else if (page == 7) // timed count running page
   {
     elapsedTime = millis() - startMillis;
-    if(elapsedTime < intervalMillis)
+    if (elapsedTime < intervalMillis)
     {
-      if((millis() - previousMillis) >= 1000)
+      if ((millis() - previousMillis) >= 1000)
       {
         previousMillis = millis();
 
@@ -1265,19 +1261,19 @@ void loop()
         tft.println(currentCount);
 
         cpm = float(currentCount) / float((1 + elapsedTime) / 60000.0);
-        
+
         tft.setCursor(101, 226);
         tft.println(cpm);
 
-        if(cpm < 10)
+        if (cpm < 10)
         {
           tft.fillRect(170, 225, 50, 40, ILI9341_BLACK);
         }
-        else if(cpm < 100)
+        else if (cpm < 100)
         {
           tft.fillRect(190, 225, 35, 40, ILI9341_BLACK);
         }
-        else if(cpm < 1000)
+        else if (cpm < 1000)
         {
           tft.fillRect(209, 225, 18, 40, ILI9341_BLACK);
         }
@@ -1285,7 +1281,7 @@ void loop()
       progress = map(elapsedTime, 0, intervalMillis, 0, 217);
       tft.fillRect(12, 105, progress, 16, 0x25A6);
     }
-    else 
+    else
     {
       if (completed == 0)
       {
@@ -1293,7 +1289,7 @@ void loop()
         completed = 1;
       }
     }
-    
+
     if (!ts.touched())
       wasTouched = 0;
     if (ts.touched() && !wasTouched)
@@ -1324,7 +1320,7 @@ void loop()
       }
     }
   }
-  else if (page == 8)          // device mode selection page
+  else if (page == 8) // device mode selection page
   {
     if (!ts.touched())
       wasTouched = 0;
@@ -1340,7 +1336,7 @@ void loop()
         page = 5;
         if (EEPROM.read(saveDeviceMode) != deviceMode) // check current EEPROM value and only write if new value is different
         {
-          EEPROM.write(saveDeviceMode, deviceMode); 
+          EEPROM.write(saveDeviceMode, deviceMode);
           EEPROM.commit();
         }
         drawWifiPage();
@@ -1356,7 +1352,6 @@ void loop()
         tft.fillRoundRect(4, 128, 232, 48, 4, ILI9341_BLACK);
         tft.setCursor(30, 160);
         tft.println("MON. STATION");
-
       }
       else if ((x > 4 && x < 234) && (y > 127 && y < 177))
       {
@@ -1369,7 +1364,6 @@ void loop()
         tft.fillRoundRect(4, 128, 232, 48, 4, 0x2A86);
         tft.setCursor(30, 160);
         tft.println("MON. STATION");
-
       }
     }
   }
@@ -1387,14 +1381,14 @@ void drawHomePage()
   tft.fillRect(212, 6, 22, 10, ILI9341_BLACK);
 
   tft.fillRect(batteryMapped, 6, (234 - batteryMapped), 10, ILI9341_GREEN);
-  
+
   tft.setTextSize(1);
   tft.setTextColor(ILI9341_CYAN);
   tft.setFont(&FreeSans9pt7b);
   tft.setCursor(2, 16);
   tft.println("GC-20");
   tft.setTextColor(ILI9341_WHITE);
-  
+
   tft.setFont();
   tft.setTextSize(2);
   tft.setCursor(118, 4);
@@ -1515,7 +1509,7 @@ void drawHomePage()
   {
     tft.fillRect(175, 2, 18, 18, ILI9341_BLACK);
   }
-  
+
   if (deviceMode)
   {
     tft.drawBitmap(188, 1, wifiBitmap, 19, 19, ILI9341_WHITE);
@@ -1598,7 +1592,7 @@ void drawAlertPage()
   tft.drawFastHLine(5, 55, 229, WHITE);
 
   drawBackButton();
-  
+
   tft.setCursor(30, 164);
   tft.println("uSv/hr:");
 
@@ -1678,7 +1672,7 @@ void drawWifiPage()
     tft.setCursor(33, 145);
     tft.println("LOGGING OFF");
   }
-  
+
   tft.fillRoundRect(3, 164, 234, 44, 4, 0x2A86);
   tft.drawRoundRect(3, 164, 234, 44, 4, WHITE);
   tft.setCursor(31, 194);
@@ -1693,7 +1687,7 @@ void drawWifiPage()
   {
     tft.setFont(&FreeSans9pt7b);
     tft.setCursor(80, 297);
-    tft.println("Log memory full"); 
+    tft.println("Log memory full");
   }
 }
 
@@ -1733,7 +1727,6 @@ void drawTimedCountPage()
 
   cpm = 0;
   progress = 0;
-
 }
 
 void drawTimedCountRunningPage(int duration, int size)
@@ -1759,7 +1752,7 @@ void drawTimedCountRunningPage(int duration, int size)
   tft.println("Duration:");
   tft.setCursor(115, 150);
   tft.println(duration);
-  tft.setCursor((135 + (size - 1)*15), 150);
+  tft.setCursor((135 + (size - 1) * 15), 150);
   tft.println("min");
   tft.setCursor(15, 200);
   tft.println("Counts:");
@@ -1786,13 +1779,13 @@ void drawDeviceModePage()
 
   tft.drawRoundRect(3, 70, 234, 50, 4, WHITE);
   if (deviceMode == 0)
-  tft.fillRoundRect(4, 71, 232, 48, 4, 0x2A86);
+    tft.fillRoundRect(4, 71, 232, 48, 4, 0x2A86);
   tft.setCursor(13, 103);
   tft.println("GEIGER COUNTER");
 
   tft.drawRoundRect(3, 127, 234, 50, 4, WHITE);
   if (deviceMode == 1)
-  tft.fillRoundRect(4, 128, 232, 48, 4, 0x2A86);
+    tft.fillRoundRect(4, 128, 232, 48, 4, 0x2A86);
   tft.setCursor(30, 160);
   tft.println("MON. STATION");
 
@@ -1807,20 +1800,23 @@ void drawDeviceModePage()
 
 void isr() // interrupt service routine
 {
-  if ((micros() - 200) > previousIntMicros){
+  if ((micros() - 200) > previousIntMicros)
+  {
     currentCount++;
     cumulativeCount++;
   }
   previousIntMicros = micros();
 }
 
-void drawBackButton(){
+void drawBackButton()
+{
   tft.fillRoundRect(4, 271, 62, 45, 3, 0x3B8F);
   tft.drawRoundRect(4, 271, 62, 45, 3, ILI9341_WHITE);
   tft.drawBitmap(4, 271, backBitmap, 62, 45, ILI9341_WHITE);
 }
 
-void drawFrame(){
+void drawFrame()
+{
   tft.fillRect(2, 21, 236, 298, ILI9341_BLACK);
   tft.drawRect(0, 0, tft.width(), tft.height(), ILI9341_WHITE);
 
@@ -1829,11 +1825,11 @@ void drawFrame(){
   tft.drawLine(208, 8, 208, 13, ILI9341_WHITE);
   tft.fillRect(212, 6, 22, 10, ILI9341_BLACK);
   tft.fillRect(batteryMapped, 6, (234 - batteryMapped), 10, ILI9341_GREEN);
-  
+
   tft.setFont(&FreeSans9pt7b);
   tft.setCursor(2, 16);
   tft.setTextColor(ILI9341_CYAN);
-  
+
   tft.setTextSize(1);
   tft.println("GC-20");
   tft.setTextColor(ILI9341_WHITE);
@@ -1859,7 +1855,7 @@ void drawFrame(){
   {
     tft.fillRect(175, 2, 18, 18, ILI9341_BLACK);
   }
-  
+
   if (deviceMode)
   {
     tft.drawBitmap(188, 1, wifiBitmap, 18, 18, ILI9341_WHITE);
@@ -1889,21 +1885,23 @@ void drawCloseButton()
   tft.println("CLOSE");
 }
 
-long EEPROMReadlong(long address) {
+long EEPROMReadlong(long address)
+{
   long four = EEPROM.read(address);
   long three = EEPROM.read(address + 1);
   long two = EEPROM.read(address + 2);
   long one = EEPROM.read(address + 3);
- 
+
   return ((four << 0) & 0xFF) + ((three << 8) & 0xFFFF) + ((two << 16) & 0xFFFFFF) + ((one << 24) & 0xFFFFFFFF);
 }
 
-void EEPROMWritelong(int address, long value) {
+void EEPROMWritelong(int address, long value)
+{
   byte four = (value & 0xFF);
   byte three = ((value >> 8) & 0xFF);
   byte two = ((value >> 16) & 0xFF);
   byte one = ((value >> 24) & 0xFF);
- 
+
   EEPROM.write(address, four);
   EEPROM.write(address + 1, three);
   EEPROM.write(address + 2, two);
@@ -1918,24 +1916,22 @@ void createJsonFile()
     int count = EEPROMReadlong(i);
 
     int deltaT = 600;
-    strcat(jsonBuffer,"{\"delta_t\":");
+    strcat(jsonBuffer, "{\"delta_t\":");
     size_t lengthT = String(deltaT).length();
     char temp[10];
-    String(deltaT).toCharArray(temp,lengthT + 1);
-    strcat(jsonBuffer,temp);
-    strcat(jsonBuffer,",");
+    String(deltaT).toCharArray(temp, lengthT + 1);
+    strcat(jsonBuffer, temp);
+    strcat(jsonBuffer, ",");
 
     strcat(jsonBuffer, "\"field1\":");
     lengthT = String(count).length();
     String(count).toCharArray(temp, lengthT + 1);
 
-    strcat(jsonBuffer,temp);
-    strcat(jsonBuffer,"},");
-
+    strcat(jsonBuffer, temp);
+    strcat(jsonBuffer, "},");
   }
   size_t len = strlen(jsonBuffer);
-  jsonBuffer[len-1] = ']';
-
+  jsonBuffer[len - 1] = ']';
 }
 
 void drawBlankDialogueBox()
@@ -1945,12 +1941,11 @@ void drawBlankDialogueBox()
 
   tft.fillRoundRect(20, 50, 200, 220, 6, ILI9341_BLACK);
   tft.drawRoundRect(20, 50, 200, 220, 6, ILI9341_WHITE);
-
 }
 
 void clearLogs()
 {
-  for (int j = 100; j < 4000; j ++)
+  for (int j = 100; j < 4000; j++)
   {
     EEPROMWritelong(j, 0);
   }
